@@ -1,0 +1,166 @@
+// Prisma schema for StreamSpark
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Streamer {
+  id                String   @id @default(cuid())
+  farcasterUsername String   @unique
+  baseWalletAddress String   @unique
+  displayName       String
+  profilePictureUrl String?
+  bio               String?
+  totalTips         Float    @default(0)
+  subscriberCount   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  tips         Tip[]
+  subscriptions Subscription[]
+  milestones   Milestone[]
+  notifications Notification[]
+  apiKeys      ApiKey[]
+
+  @@map("streamers")
+}
+
+model Viewer {
+  id                String   @id @default(cuid())
+  farcasterUsername String?  @unique
+  baseWalletAddress String   @unique
+  displayName       String?
+  profilePictureUrl String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  tips         Tip[]
+  subscriptions Subscription[]
+  notifications Notification[]
+
+  @@map("viewers")
+}
+
+model Tip {
+  id          String   @id @default(cuid())
+  streamerId  String
+  viewerId    String
+  amount      Float
+  currency    String   @default("ETH")
+  message     String?
+  transactionHash String? @unique
+  status      TipStatus @default(PENDING)
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  streamer Streamer @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+  viewer   Viewer   @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@map("tips")
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  streamerId     String
+  viewerId       String
+  tierName       String
+  amount         Float
+  frequency      SubscriptionFrequency
+  startDate      DateTime @default(now())
+  endDate        DateTime?
+  nextPaymentDate DateTime
+  status         SubscriptionStatus @default(ACTIVE)
+  transactionHash String? @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  streamer Streamer @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+  viewer   Viewer   @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  streamerId  String
+  amount      Float
+  reward      String
+  achievedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  streamer Streamer @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+
+  @@unique([streamerId, amount])
+  @@map("milestones")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  streamerId String?
+  viewerId   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  streamer Streamer? @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+  viewer   Viewer?   @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  streamerId  String
+  permissions Json
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  streamer Streamer @relation(fields: [streamerId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// Enums
+enum TipStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  SUSPENDED
+}
+
+enum SubscriptionFrequency {
+  WEEKLY
+  MONTHLY
+}
+
+enum NotificationType {
+  NEW_TIP
+  MILESTONE_ACHIEVED
+  SUBSCRIPTION_STARTED
+  SUBSCRIPTION_RENEWED
+  SUBSCRIPTION_CANCELLED
+}
+

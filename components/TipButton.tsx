@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, DollarSign } from 'lucide-react';
+import { Loader2, DollarSign, CheckCircle } from 'lucide-react';
 import { clsx } from 'clsx';
+import { ConfirmationDialog } from './ConfirmationDialog';
 
 interface TipButtonProps {
   amount: number;
@@ -23,16 +24,32 @@ export function TipButton({
   const [customValue, setCustomValue] = useState('');
   const [message, setMessage] = useState('');
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingTip, setPendingTip] = useState<{ amount: number; message?: string } | null>(null);
+  const [justTipped, setJustTipped] = useState(false);
 
-  const handleTip = async () => {
-    if (variant === 'disabled') return;
+  const handleTipClick = () => {
+    if (variant === 'disabled' || isProcessing) return;
 
     const tipAmount = customAmount ? parseFloat(customValue) || 0 : amount;
     if (tipAmount <= 0) return;
 
+    // Show confirmation dialog
+    setPendingTip({ amount: tipAmount, message: message || undefined });
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmTip = async () => {
+    if (!pendingTip) return;
+
     setIsProcessing(true);
     try {
-      await onTip(tipAmount, message || undefined);
+      await onTip(pendingTip.amount, pendingTip.message);
+      
+      // Show success state
+      setJustTipped(true);
+      setTimeout(() => setJustTipped(false), 2000);
+      
       if (customAmount) {
         setCustomValue('');
         setMessage('');
@@ -42,6 +59,7 @@ export function TipButton({
       console.error('Tip failed:', error);
     } finally {
       setIsProcessing(false);
+      setPendingTip(null);
     }
   };
 
@@ -74,8 +92,12 @@ export function TipButton({
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="input-field"
+                aria-describedby="amount-help"
               />
+              <p id="amount-help" className="text-xs text-text-tertiary mt-1">
+                Minimum tip: 0.01 ETH
+              </p>
             </div>
 
             <div>
@@ -88,24 +110,35 @@ export function TipButton({
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Say something nice..."
                 maxLength={100}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="input-field"
+                aria-describedby="message-help"
               />
+              <p id="message-help" className="text-xs text-text-tertiary mt-1">
+                {message.length}/100 characters
+              </p>
             </div>
 
             <button
-              onClick={handleTip}
+              onClick={handleTipClick}
               disabled={isProcessing || !customValue || parseFloat(customValue) <= 0}
               className={clsx(
-                'w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2',
-                isProcessing || !customValue || parseFloat(customValue) <= 0
+                'w-full px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2',
+                justTipped
+                  ? 'bg-green-500 text-white'
+                  : isProcessing || !customValue || parseFloat(customValue) <= 0
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'btn-accent hover:scale-105'
+                  : 'btn-accent hover:scale-105 animate-pulse-glow'
               )}
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Processing...
+                </>
+              ) : justTipped ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Tip Sent!
                 </>
               ) : (
                 <>
@@ -121,32 +154,60 @@ export function TipButton({
   }
 
   return (
-    <button
-      onClick={handleTip}
-      disabled={variant === 'disabled' || isProcessing}
-      className={clsx(
-        'px-6 py-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 min-h-[60px]',
-        {
-          'btn-accent hover:scale-105 shadow-lg': variant === 'default' && !isProcessing,
-          'bg-primary text-white': variant === 'processing' && !isProcessing,
-          'bg-gray-300 text-gray-500 cursor-not-allowed': variant === 'disabled' || isProcessing,
-        }
-      )}
-    >
-      {isProcessing ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Processing...
-        </>
-      ) : (
-        <>
-          {icon}
-          <div className="text-center">
-            <div className="font-bold">{amount} ETH</div>
-            <div className="text-xs opacity-75">Quick Tip</div>
-          </div>
-        </>
-      )}
-    </button>
+    <>
+      <button
+        onClick={handleTipClick}
+        disabled={variant === 'disabled' || isProcessing}
+        className={clsx(
+          'px-6 py-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 min-h-[60px] group',
+          {
+            'btn-accent hover:scale-105 animate-pulse-glow': variant === 'default' && !isProcessing && !justTipped,
+            'bg-primary text-white': variant === 'processing' && !isProcessing && !justTipped,
+            'bg-green-500 text-white animate-tip-celebration': justTipped,
+            'bg-gray-300 text-gray-500 cursor-not-allowed': variant === 'disabled' || isProcessing,
+          }
+        )}
+        aria-label={`Tip ${amount} ETH`}
+      >
+        {isProcessing ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Processing...
+          </>
+        ) : justTipped ? (
+          <>
+            <CheckCircle className="w-5 h-5" />
+            <div className="text-center">
+              <div className="font-bold">Sent!</div>
+              <div className="text-xs opacity-75">Thank you!</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="transition-transform duration-200 group-hover:scale-110">
+              {icon}
+            </div>
+            <div className="text-center">
+              <div className="font-bold">{amount} ETH</div>
+              <div className="text-xs opacity-75">Quick Tip</div>
+            </div>
+          </>
+        )}
+      </button>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        onConfirm={handleConfirmTip}
+        title="Confirm Tip"
+        message={`Are you sure you want to tip ${pendingTip?.amount} ETH to this streamer?${pendingTip?.message ? ` Your message: "${pendingTip.message}"` : ''}`}
+        confirmText="Send Tip"
+        cancelText="Cancel"
+        type="tip"
+        amount={pendingTip?.amount}
+        currency="ETH"
+      />
+    </>
   );
 }

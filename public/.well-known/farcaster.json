@@ -1,0 +1,30 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "frame": {
+    "version": "1",
+    "name": "StreamSpark",
+    "subtitle": "Built with Zara",
+    "description": "StreamSpark is a Base Mini App built with Zara.",
+    "iconUrl": "https://0co.to/images/zara-2.png",
+    "homeUrl": "https://0c2bb838ed7e4a1ba07604cac6a3f636-z439.vercel.app",
+    "splashImageUrl": "https://0c2bb838ed7e4a1ba07604cac6a3f636-z439.vercel.app/splash.png",
+    "splashBackgroundColor": "#000000",
+    "heroImageUrl": "https://0c2bb838ed7e4a1ba07604cac6a3f636-z439.vercel.app/image.png",
+    "tagline": "StreamSpark",
+    "screenshotUrls": [
+      "https://0c2bb838ed7e4a1ba07604cac6a3f636-z439.vercel.app/screenshot.png",
+      "https://0c2bb838ed7e4a1ba07604cac6a3f636-z439.vercel.app/screenshot.png"
+    ],
+    "primaryCategory": "social",
+    "tags": [
+      "base",
+      "miniapp",
+      "onchainkit"
+    ],
+    "webhookUrl": "https://0c2bb838ed7e4a1ba07604cac6a3f636-z439.vercel.app/api/webhook"
+  }
+}

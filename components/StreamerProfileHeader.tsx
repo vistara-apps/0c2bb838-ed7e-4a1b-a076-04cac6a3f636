@@ -38,19 +38,27 @@ export function StreamerProfileHeader({
           {streamer.profilePictureUrl && !imageError ? (
             <img
               src={streamer.profilePictureUrl}
-              alt={streamer.displayName}
+              alt={`${streamer.displayName}'s profile picture`}
               className="w-full h-full object-cover"
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+            <div 
+              className="w-full h-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-2xl font-bold"
+              aria-label={`${streamer.displayName}'s avatar`}
+              role="img"
+            >
               {streamer.displayName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
         
         {/* Online Status Indicator */}
-        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+        <div 
+          className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center"
+          aria-label="Online status: Live streaming"
+          role="status"
+        >
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
         </div>
       </div>
@@ -71,26 +79,30 @@ export function StreamerProfileHeader({
       </div>
 
       {/* Stats */}
-      <div className="flex items-center justify-center gap-6 text-white">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-accent" />
+      <div className="flex items-center justify-center gap-6 text-white" role="group" aria-label="Streamer statistics">
+        <div className="flex items-center gap-2" aria-label={`Total tips: ${totalTips.toFixed(2)} ETH`}>
+          <TrendingUp className="w-5 h-5 text-accent" aria-hidden="true" />
           <span className="font-semibold">{totalTips.toFixed(2)} ETH</span>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-accent" />
+        <div className="flex items-center gap-2" aria-label={`${subscriberCount} supporters`}>
+          <Users className="w-5 h-5 text-accent" aria-hidden="true" />
           <span className="font-semibold">{subscriberCount} Supporters</span>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Star className="w-5 h-5 text-accent" />
+        <div className="flex items-center gap-2" aria-label="Currently live streaming">
+          <Star className="w-5 h-5 text-accent" aria-hidden="true" />
           <span className="font-semibold">Live</span>
         </div>
       </div>
 
       {/* Streaming Status */}
-      <div className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+      <div 
+        className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-medium"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="w-2 h-2 bg-white rounded-full animate-pulse" aria-hidden="true"></div>
         LIVE STREAMING
       </div>
     </div>
